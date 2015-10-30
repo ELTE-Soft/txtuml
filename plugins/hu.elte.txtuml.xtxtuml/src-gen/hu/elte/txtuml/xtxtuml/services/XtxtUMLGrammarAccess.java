@@ -719,12 +719,13 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 		private final Alternatives cAlternatives = (Alternatives)rule.eContents().get(1);
 		private final RuleCall cTUStateParserRuleCall_0 = (RuleCall)cAlternatives.eContents().get(0);
 		private final RuleCall cTUEntryOrExitActivityParserRuleCall_1 = (RuleCall)cAlternatives.eContents().get(1);
+		private final RuleCall cTUTransitionParserRuleCall_2 = (RuleCall)cAlternatives.eContents().get(2);
 		
 		//TUStateMember:
-		//	TUState | TUEntryOrExitActivity;
+		//	TUState | TUEntryOrExitActivity | TUTransition;
 		@Override public ParserRule getRule() { return rule; }
 
-		//TUState | TUEntryOrExitActivity
+		//TUState | TUEntryOrExitActivity | TUTransition
 		public Alternatives getAlternatives() { return cAlternatives; }
 
 		//TUState
@@ -732,6 +733,9 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 
 		//TUEntryOrExitActivity
 		public RuleCall getTUEntryOrExitActivityParserRuleCall_1() { return cTUEntryOrExitActivityParserRuleCall_1; }
+
+		//TUTransition
+		public RuleCall getTUTransitionParserRuleCall_2() { return cTUTransitionParserRuleCall_2; }
 	}
 
 	public class TUEntryOrExitActivityElements extends AbstractParserRuleElementFinder {
@@ -1221,8 +1225,8 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 		private final RuleCall cXVariableDeclarationParserRuleCall_6 = (RuleCall)cAlternatives.eContents().get(6);
 		
 		//XRAlfStatementSemicolonNotNeeded returns xbase::XExpression:
-		//	XIfExpression | XForLoopExpression | XBasicForLoopExpression | XWhileExpression | XSwitchExpression |
-		//	XBlockExpression | // semicolon included in rule
+		//	XIfExpression | XForLoopExpression | XBasicForLoopExpression | XWhileExpression | XSwitchExpression | XBlockExpression
+		//	| // semicolon included in rule
 		//	XVariableDeclaration;
 		@Override public ParserRule getRule() { return rule; }
 
@@ -2095,8 +2099,8 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 		// *     <li>XBlockExpression is mandatory</li>
 		// * </ul>
 		// * / XBasicForLoopExpression returns xbase::XBasicForLoopExpression:
-		//	{xbase::XBasicForLoopExpression} "for" "(" (initExpressions+=XExpression ";" | initExpressions+=XVariableDeclaration
-		//	| ";") expression=XExpression? ";" updateExpressions+=XExpression? ")" eachExpression=XBlockExpression;
+		//	{xbase::XBasicForLoopExpression} "for" "(" (initExpressions+=XExpression ";" | initExpressions+=XVariableDeclaration |
+		//	";") expression=XExpression? ";" updateExpressions+=XExpression? ")" eachExpression=XBlockExpression;
 		@Override public ParserRule getRule() { return rule; }
 
 		//{xbase::XBasicForLoopExpression} "for" "(" (initExpressions+=XExpression ";" | initExpressions+=XVariableDeclaration |
@@ -2347,8 +2351,8 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 		//	XPrimaryExpression (=> ({xbase::XAssignment.assignable=current} ("." | explicitStatic?="::")
 		//	feature=[types::JvmIdentifiableElement|FeatureCallID] OpSingleAssign) value=XAssignment | =>
 		//	({xbase::XMemberFeatureCall.memberCallTarget=current} ("." | explicitStatic?="::"))
-		//	feature=[types::JvmIdentifiableElement|IdOrSuper] (=> explicitOperationCall?="(" (memberCallArguments+=XShortClosure
-		//	| memberCallArguments+=XExpression ("," memberCallArguments+=XExpression)*)? ")")? | =>
+		//	feature=[types::JvmIdentifiableElement|IdOrSuper] (=> explicitOperationCall?="(" (memberCallArguments+=XShortClosure |
+		//	memberCallArguments+=XExpression ("," memberCallArguments+=XExpression)*)? ")")? | =>
 		//	({RAlfAssocNavExpression.left=current} "->") right=[TUAssociationEnd|TUAssocEndName])*;
 		@Override public ParserRule getRule() { return rule; }
 
@@ -3151,7 +3155,7 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 	}
 
 	//TUStateMember:
-	//	TUState | TUEntryOrExitActivity;
+	//	TUState | TUEntryOrExitActivity | TUTransition;
 	public TUStateMemberElements getTUStateMemberAccess() {
 		return pTUStateMember;
 	}
@@ -3298,8 +3302,8 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 	}
 
 	//XRAlfStatementSemicolonNotNeeded returns xbase::XExpression:
-	//	XIfExpression | XForLoopExpression | XBasicForLoopExpression | XWhileExpression | XSwitchExpression |
-	//	XBlockExpression | // semicolon included in rule
+	//	XIfExpression | XForLoopExpression | XBasicForLoopExpression | XWhileExpression | XSwitchExpression | XBlockExpression
+	//	| // semicolon included in rule
 	//	XVariableDeclaration;
 	public XRAlfStatementSemicolonNotNeededElements getXRAlfStatementSemicolonNotNeededAccess() {
 		return pXRAlfStatementSemicolonNotNeeded;
@@ -3557,8 +3561,8 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 	// *     <li>XBlockExpression is mandatory</li>
 	// * </ul>
 	// * / XBasicForLoopExpression returns xbase::XBasicForLoopExpression:
-	//	{xbase::XBasicForLoopExpression} "for" "(" (initExpressions+=XExpression ";" | initExpressions+=XVariableDeclaration
-	//	| ";") expression=XExpression? ";" updateExpressions+=XExpression? ")" eachExpression=XBlockExpression;
+	//	{xbase::XBasicForLoopExpression} "for" "(" (initExpressions+=XExpression ";" | initExpressions+=XVariableDeclaration |
+	//	";") expression=XExpression? ";" updateExpressions+=XExpression? ")" eachExpression=XBlockExpression;
 	public XBasicForLoopExpressionElements getXBasicForLoopExpressionAccess() {
 		return pXBasicForLoopExpression;
 	}
@@ -3626,8 +3630,8 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 	//	XPrimaryExpression (=> ({xbase::XAssignment.assignable=current} ("." | explicitStatic?="::")
 	//	feature=[types::JvmIdentifiableElement|FeatureCallID] OpSingleAssign) value=XAssignment | =>
 	//	({xbase::XMemberFeatureCall.memberCallTarget=current} ("." | explicitStatic?="::"))
-	//	feature=[types::JvmIdentifiableElement|IdOrSuper] (=> explicitOperationCall?="(" (memberCallArguments+=XShortClosure
-	//	| memberCallArguments+=XExpression ("," memberCallArguments+=XExpression)*)? ")")? | =>
+	//	feature=[types::JvmIdentifiableElement|IdOrSuper] (=> explicitOperationCall?="(" (memberCallArguments+=XShortClosure |
+	//	memberCallArguments+=XExpression ("," memberCallArguments+=XExpression)*)? ")")? | =>
 	//	({RAlfAssocNavExpression.left=current} "->") right=[TUAssociationEnd|TUAssocEndName])*;
 	public XMemberFeatureCallElements getXMemberFeatureCallAccess() {
 		return pXMemberFeatureCall;
@@ -4183,8 +4187,7 @@ public class XtxtUMLGrammarAccess extends AbstractGrammarElementFinder {
 	/// **
 	// * Dummy rule, for "better" downwards compatibility, since GrammarAccess generates non-static inner classes, 
 	// * which makes downstream grammars break on classloading, when a rule is removed.
-	// * /
-	//StaticQualifier:
+	// * / StaticQualifier:
 	//	(ValidID "::")+;
 	public XbaseGrammarAccess.StaticQualifierElements getStaticQualifierAccess() {
 		return gaXbase.getStaticQualifierAccess();
