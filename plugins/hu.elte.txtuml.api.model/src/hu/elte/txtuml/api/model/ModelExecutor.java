@@ -435,7 +435,7 @@ public final class ModelExecutor implements ModelElement {
 	public static void shutdownNow() {
 		Report.event.forEach(x -> x.executionTerminated());
 
-		thread.interrupt();
+		thread.inactivate();
 
 		terminationManager.notifyAllOfTermination();
 	}
