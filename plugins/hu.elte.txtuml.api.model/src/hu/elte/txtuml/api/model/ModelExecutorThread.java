@@ -3,6 +3,7 @@ package hu.elte.txtuml.api.model;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
  * Multiple classes and interfaces defined in this file.
@@ -19,6 +20,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  */
 class ModelExecutorThread extends Thread {
+
+	private final AtomicBoolean active = new AtomicBoolean(true);
 
 	/**
 	 * The mailbox in which the to-be-sent signals are gathered and later
@@ -125,7 +128,7 @@ class ModelExecutorThread extends Thread {
 	@Override
 	public void run() {
 		try {
-			while (true) {
+			while (active.get()) {
 				while (true) {
 					CheckQueueEntry entry = checkQueue.poll();
 					if (entry == null) {
@@ -136,8 +139,15 @@ class ModelExecutorThread extends Thread {
 
 				mailbox.take().execute();
 			}
-		} catch (InterruptedException e) { // do nothing (finish thread)
+		} catch (InterruptedException e) {
 		}
+	}
+
+	public void inactivate() {
+		active.set(false);
+		interrupt();
+		// Interrupts itself to stop even if it is awaiting for the mailbox to
+		// get an entry.
 	}
 
 }
