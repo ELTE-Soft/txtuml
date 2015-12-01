@@ -1,2 +1,13 @@
 * text=auto
+*.java text
+*.txt text
+*.xml text
+*.xtend text
+*.xtext text
+*.prefs text
+*.properties text
+MANIFEST.MF text
+*.mwe2 text
+*.g text
+*.tokens text
 
