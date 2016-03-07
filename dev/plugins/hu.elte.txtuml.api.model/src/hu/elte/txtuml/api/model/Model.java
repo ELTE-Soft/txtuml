@@ -6,8 +6,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import hu.elte.txtuml.api.model.external.ExternalClass;
-
 /**
  * This annotation shows that the annotated package and its subpackages form a
  * JtxtUML model. Read this documentation page further for an overview on
@@ -61,16 +59,14 @@ import hu.elte.txtuml.api.model.external.ExternalClass;
  * package and the {@link hu.elte.txtuml.api.model.blocks} package, if the
  * opposite is not stated on the corresponding pages of this documentation.</li>
  * <li>Using Java primitive types and <code>String</code>s.</li>
- * <li>Using subclasses of <code>ExternalClass</code>, like the classes of the
- * {@link hu.elte.txtuml.api.stdlib} package. See the documentation of
- * {@link ExternalClass} for details.</li>
  * </ul>
  * 
  * <h3>Disallowed in the model</h3>
  * 
  * <ul>
  * <li>Using or extending any type not included in the preceding list, including
- * Java built-in types (with the exception of <code>java.lang.Object</code>).</li>
+ * Java built-in types (with the exception of <code>java.lang.Object</code>).
+ * </li>
  * <li>Exception handling.</li>
  * <li>Defining <code>abstract class</code>es.</li>
  * <li>Defining <code>synchronized</code>, <code>native</code> or
@@ -89,14 +85,12 @@ import hu.elte.txtuml.api.model.external.ExternalClass;
  * <ul>
  * <li>The model is accessed from another thread (that is, not the executor's
  * thread).</li>
- * <li>The model calls a method of a class that is not part of the model (only
- * allowed if that class extends {@link ExternalClass}), and then the model is
- * accessed from that method (on the executor's thread).</li>
+ * <li>The model calls a method of a class the body of which is not part of the
+ * model (only allowed if that method is marked with {@link ExternalBody}).</li>
  * </ul>
  * 
  * <p>
- * For details about the second case, see the documentation of
- * {@link ExternalClass}. In the first case, when the model is accessed from
+ * In the first case, when the model is accessed from
  * another thread, <b>only the following actions might be performed</b>:
  * 
  * <ul>
@@ -153,9 +147,6 @@ import hu.elte.txtuml.api.model.external.ExternalClass;
  * <li>Querying association ends with the {@link ModelClass#assoc(Class)
  * ModelClass.assoc} method, using the result through the {@link Collection}
  * interface.</li>
- * <li>Using subclasses of {@link ExternalClass} to bring external features into
- * the model or to communicate with components of the program that are not part
- * of the model.</li>
  * </ul>
  * 
  * <h3>Condition evaluation</h3>
@@ -175,7 +166,8 @@ import hu.elte.txtuml.api.model.external.ExternalClass;
  * include only the following actions</b>:
  * <ul>
  * <li>Defining, modifying local variables.</li>
- * <li>Getting (but <i>not</i> setting) fields of model objects and signals.</li>
+ * <li>Getting (but <i>not</i> setting) fields of model objects and signals.
+ * </li>
  * <li>Querying association ends with the {@link ModelClass#assoc(Class)
  * ModelClass.assoc} method.</li>
  * <li>Using primitives (including <code>Sting</code>).</li>
