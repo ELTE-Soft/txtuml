@@ -74,13 +74,24 @@ public final class SharedUtils {
 	}
 
 	public static Expression obtainSingleMemberAnnotationValue(BodyDeclaration declaration, Class<?> annotationClass) {
+		Annotation annotation = obtainAnnotation(declaration, annotationClass);
+		if (annotation != null && annotation.isSingleMemberAnnotation()) {
+			SingleMemberAnnotation singleMemberAnnot = (SingleMemberAnnotation) annotation;
+			return singleMemberAnnot.getValue();
+		}
+		return null;
+	}
+
+	/**
+	 * @return the annotation node if it is present on the declaration or null
+	 */
+	public static Annotation obtainAnnotation(BodyDeclaration declaration, Class<?> annotationClass) {
 		for (Object mod : declaration.modifiers()) {
 			IExtendedModifier modifier = (IExtendedModifier) mod;
 			if (modifier.isAnnotation()) {
 				Annotation annotation = (Annotation) modifier;
-				if (annotation.isSingleMemberAnnotation() && identicalAnnotations(annotation, annotationClass)) {
-					SingleMemberAnnotation singleMemberAnnot = (SingleMemberAnnotation) annotation;
-					return singleMemberAnnot.getValue();
+				if (identicalAnnotations(annotation, annotationClass)) {
+					return annotation;
 				}
 			}
 		}
@@ -130,7 +141,7 @@ public final class SharedUtils {
 
 		parser.setSource(content);
 		parser.setProject(project);
-		
+
 		parser.setResolveBindings(true);
 		parser.setBindingsRecovery(true);
 		parser.setUnitName(sourceFile.getName());

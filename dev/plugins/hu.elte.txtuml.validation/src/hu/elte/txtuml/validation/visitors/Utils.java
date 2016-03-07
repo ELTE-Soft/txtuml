@@ -1,15 +1,16 @@
 package hu.elte.txtuml.validation.visitors;
 
+import java.util.function.Predicate;
+
 import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
 
-import hu.elte.txtuml.api.model.ModelClass;
 import hu.elte.txtuml.utils.jdt.ElementTypeTeller;
-import hu.elte.txtuml.utils.jdt.SharedUtils;
 import hu.elte.txtuml.validation.ProblemCollector;
 import hu.elte.txtuml.validation.problems.general.InvalidModifier;
 import hu.elte.txtuml.validation.problems.general.InvalidTemplate;
@@ -24,14 +25,18 @@ public class Utils {
 	}
 
 	public static void checkModifiers(ProblemCollector collector, BodyDeclaration elem) {
+		checkModifiers(collector, elem, m -> false);
+	}
+	
+	public static void checkModifiers(ProblemCollector collector, BodyDeclaration elem, Predicate<Modifier> allowSpecific) {
 		for (Object obj : elem.modifiers()) {
 			if (!(obj instanceof Modifier)) {
 				continue;
 			}
 			Modifier modifier = (Modifier) obj;
 			boolean valid;
-			if (modifier.isStatic()) {
-				valid = false;
+			if (allowSpecific.test(modifier)) {
+				valid = true;
 			} else {
 				valid = modifier.isPrivate() || modifier.isPublic();
 			}
@@ -42,16 +47,20 @@ public class Utils {
 	}
 
 	public static boolean isAllowedAttributeType(Type type, boolean isVoidAllowed) {
-		return isBasicType(type, isVoidAllowed) || ElementTypeTeller.isDataType(type.resolveBinding())
-				|| ElementTypeTeller.isExternalInterface(type.resolveBinding());
+		return isBasicType(type, isVoidAllowed) || ElementTypeTeller.isDataType(type.resolveBinding());
 	}
 
 	public static boolean isAllowedParameterType(Type type, boolean isVoidAllowed) {
-		if (isAllowedAttributeType(type, isVoidAllowed) || ElementTypeTeller.isModelClass(type.resolveBinding())) {
+		if (isAllowedAttributeType(type, isVoidAllowed)) {
 			return true;
 		}
+		
+		ITypeBinding binding = type.resolveBinding();
+		if (ElementTypeTeller.isModelClass(binding) || ElementTypeTeller.isSignal(binding)) {
+			return true;			
+		}
 
-		return (SharedUtils.typeIsAssignableFrom(type.resolveBinding(), ModelClass.class));
+		return false;
 	}
 
 	public static boolean isVoid(Type type) {
