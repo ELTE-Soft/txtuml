@@ -6,8 +6,7 @@ import hu.elte.txtuml.api.model.ModelClass;
 import hu.elte.txtuml.api.model.To;
 
 public class A extends ModelClass {
-	protected A connnectionVal;
-
+	
 	class Init extends Initial {
 	}
 
