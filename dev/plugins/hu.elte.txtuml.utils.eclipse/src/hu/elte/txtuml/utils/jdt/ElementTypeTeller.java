@@ -261,6 +261,10 @@ public final class ElementTypeTeller {
 		return false;
 	}
 
+	public static boolean isExternal(ITypeBinding typeBinding) {
+		return SharedUtils.obtainAnnotation(typeBinding, External.class) != null;
+	}
+	
 	public static boolean isExternal(BodyDeclaration declaration) {
 		return SharedUtils.obtainAnnotation(declaration, External.class) != null;
 	}

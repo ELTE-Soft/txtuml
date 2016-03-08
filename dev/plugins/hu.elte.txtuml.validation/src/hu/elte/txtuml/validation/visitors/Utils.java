@@ -27,8 +27,9 @@ public class Utils {
 	public static void checkModifiers(ProblemCollector collector, BodyDeclaration elem) {
 		checkModifiers(collector, elem, m -> false);
 	}
-	
-	public static void checkModifiers(ProblemCollector collector, BodyDeclaration elem, Predicate<Modifier> allowSpecific) {
+
+	public static void checkModifiers(ProblemCollector collector, BodyDeclaration elem,
+			Predicate<Modifier> allowSpecific) {
 		for (Object obj : elem.modifiers()) {
 			if (!(obj instanceof Modifier)) {
 				continue;
@@ -47,17 +48,22 @@ public class Utils {
 	}
 
 	public static boolean isAllowedAttributeType(Type type, boolean isVoidAllowed) {
-		return isBasicType(type, isVoidAllowed) || ElementTypeTeller.isDataType(type.resolveBinding());
+		if (isBasicType(type, isVoidAllowed)) {
+			return true;
+		}
+		ITypeBinding binding = type.resolveBinding();
+		return !ElementTypeTeller.isExternal(binding) && ElementTypeTeller.isDataType(binding);
 	}
 
 	public static boolean isAllowedParameterType(Type type, boolean isVoidAllowed) {
 		if (isAllowedAttributeType(type, isVoidAllowed)) {
 			return true;
 		}
-		
+
 		ITypeBinding binding = type.resolveBinding();
-		if (ElementTypeTeller.isModelClass(binding) || ElementTypeTeller.isSignal(binding)) {
-			return true;			
+		if (!ElementTypeTeller.isExternal(binding)
+				&& (ElementTypeTeller.isModelClass(binding) || ElementTypeTeller.isSignal(binding))) {
+			return true;
 		}
 
 		return false;
