@@ -1,8 +1,12 @@
 package hu.elte.txtuml.validation.visitors;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.PrimitiveType;
+import org.eclipse.jdt.core.dom.PrimitiveType.Code;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
@@ -15,6 +19,12 @@ import hu.elte.txtuml.validation.problems.general.InvalidModifier;
 import hu.elte.txtuml.validation.problems.general.InvalidTemplate;
 
 public class Utils {
+
+	private static List<String> BASIC_CLASSES = Arrays.asList(String.class.getCanonicalName(),
+	Integer.class.getCanonicalName(), Double.class.getCanonicalName(), Boolean.class.getCanonicalName());
+
+	private static List<Code> PRIMITIVE_TYPES = Arrays.asList(PrimitiveType.BOOLEAN, PrimitiveType.DOUBLE,
+	PrimitiveType.INT);
 
 	public static void checkTemplate(ProblemCollector collector, TypeDeclaration elem) {
 		if (elem.typeParameters().size() > 0) {
@@ -73,10 +83,9 @@ public class Utils {
 	public static boolean isBasicType(Type type, boolean isVoidAllowed) {
 		if (type.isPrimitiveType()) {
 			PrimitiveType.Code code = ((PrimitiveType) type).getPrimitiveTypeCode();
-			return (code == PrimitiveType.BOOLEAN || code == PrimitiveType.DOUBLE || code == PrimitiveType.INT
-					|| (code == PrimitiveType.VOID && isVoidAllowed));
+			return (PRIMITIVE_TYPES.contains(code) || (code == PrimitiveType.VOID && isVoidAllowed));
 		}
-		if (type.resolveBinding().getQualifiedName().equals(String.class.getCanonicalName())) {
+		if (BASIC_CLASSES.contains(type.resolveBinding().getQualifiedName())) {
 			return true;
 		}
 		return false;
