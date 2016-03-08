@@ -2,7 +2,7 @@ package hu.elte.txtuml.examples.machine;
 
 import hu.elte.txtuml.api.model.Action;
 import hu.elte.txtuml.api.model.ModelExecutor;
-import hu.elte.txtuml.api.stdlib.Timer;
+import hu.elte.txtuml.api.stdlib.timers.Timer;
 import hu.elte.txtuml.examples.machine.model3.Machine;
 import hu.elte.txtuml.examples.machine.model3.User;
 import hu.elte.txtuml.examples.machine.model3.associations.Usage;

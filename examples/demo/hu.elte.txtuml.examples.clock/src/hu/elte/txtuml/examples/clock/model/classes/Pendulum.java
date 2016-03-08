@@ -6,12 +6,13 @@ import hu.elte.txtuml.api.model.ModelClass;
 import hu.elte.txtuml.api.model.OutPort;
 import hu.elte.txtuml.api.model.To;
 import hu.elte.txtuml.api.model.Trigger;
-import hu.elte.txtuml.api.stdlib.Timer;
+import hu.elte.txtuml.api.stdlib.timers.Timer;
+import hu.elte.txtuml.examples.clock.model.associations.TimerOfPendulum;
 import hu.elte.txtuml.examples.clock.model.interfaces.TickIfc;
 import hu.elte.txtuml.examples.clock.model.signals.Tick;
 
 public class Pendulum extends ModelClass {
-	private Timer.Handle timerHandle;
+	
 	private int unit = 1000;
 	
 	public class OutTickPort extends OutPort<TickIfc> {}
@@ -26,14 +27,15 @@ public class Pendulum extends ModelClass {
 	@From(Init.class) @To(Working.class)
 	class Initialize extends Transition {
 		public void effect() {
-			timerHandle = Timer.start(Pendulum.this, new Tick(), unit);
+			Timer timer = Timer.start(Pendulum.this, new Tick(), unit);
+			Action.link(TimerOfPendulum.timer.class, timer, TimerOfPendulum.pendulum.class, Pendulum.this);
 		}
 	}
 	
 	@From(Working.class) @To(Working.class) @Trigger(Tick.class)
 	class DoTick extends Transition {
 		public void effect() {
-			timerHandle.reset(unit);
+			assoc(TimerOfPendulum.timer.class).selectAny().reset(unit);
 		}
 	}
 }

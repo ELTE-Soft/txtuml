@@ -2,11 +2,11 @@ package hu.elte.txtuml.examples.machine;
 
 import hu.elte.txtuml.api.model.Action;
 import hu.elte.txtuml.api.model.ModelExecutor;
-import hu.elte.txtuml.api.stdlib.Timer;
-import hu.elte.txtuml.examples.machine.xmodel3.Machine;
-import hu.elte.txtuml.examples.machine.xmodel3.User;
-import hu.elte.txtuml.examples.machine.xmodel3.Usage;
+import hu.elte.txtuml.api.stdlib.timers.Timer;
 import hu.elte.txtuml.examples.machine.xmodel3.DoYourWork;
+import hu.elte.txtuml.examples.machine.xmodel3.Machine;
+import hu.elte.txtuml.examples.machine.xmodel3.Usage;
+import hu.elte.txtuml.examples.machine.xmodel3.User;
 
 public class XMachine3Tester {
 

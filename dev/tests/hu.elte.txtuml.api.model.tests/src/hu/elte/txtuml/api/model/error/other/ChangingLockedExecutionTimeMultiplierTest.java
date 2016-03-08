@@ -9,7 +9,7 @@ import hu.elte.txtuml.api.model.base.SimpleModelTestsBase;
 import hu.elte.txtuml.api.model.models.simple.A_B;
 import hu.elte.txtuml.api.model.models.simple.Sig;
 import hu.elte.txtuml.api.model.util.SeparateClassloaderTestRunner;
-import hu.elte.txtuml.api.stdlib.Timer;
+import hu.elte.txtuml.api.stdlib.timers.Timer;
 
 @RunWith(SeparateClassloaderTestRunner.class)
 public class ChangingLockedExecutionTimeMultiplierTest extends
