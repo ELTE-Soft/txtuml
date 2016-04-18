@@ -9,6 +9,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IAnnotationBinding;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -17,6 +18,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 import hu.elte.txtuml.api.model.Association;
 import hu.elte.txtuml.api.model.AssociationEnd;
+import hu.elte.txtuml.api.model.BehaviorPort;
 import hu.elte.txtuml.api.model.Composition;
 import hu.elte.txtuml.api.model.ConnectorBase;
 import hu.elte.txtuml.api.model.DataType;
@@ -223,6 +225,9 @@ public final class ElementTypeTeller {
 
 	public static boolean isSpecificClassifier(TypeDeclaration classifierDeclaration) {
 		ITypeBinding superclassBinding = classifierDeclaration.resolveBinding().getSuperclass();
+		if (superclassBinding == null) {
+			return false;
+		}
 		String superclassQualifiedName = superclassBinding.getQualifiedName();
 		boolean extendsModelClass = superclassQualifiedName.equals(ModelClass.class.getCanonicalName());
 		boolean extendsSignal = superclassQualifiedName.equals(Signal.class.getCanonicalName());
@@ -286,5 +291,14 @@ public final class ElementTypeTeller {
 			type = type.getSuperclass();
 		}
 		return type != null;
+	}
+
+	public static boolean isBehavioralPort(TypeDeclaration typeDeclaration) {
+		for (IAnnotationBinding annot : typeDeclaration.resolveBinding().getAnnotations()) {
+			if (annot.getAnnotationType().getQualifiedName().equals(BehaviorPort.class.getCanonicalName())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
