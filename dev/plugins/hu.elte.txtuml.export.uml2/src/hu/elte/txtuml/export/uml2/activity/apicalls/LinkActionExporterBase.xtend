@@ -18,14 +18,12 @@ abstract class LinkActionExporterBase<T extends LinkAction> extends ActionExport
 
 	protected def createEnd(LinkEndData end, ITypeBinding endType, Expression endValue) {
 		end.end = fetchElement(endType) as Property
-		if (endValue != null) {
-			val expr = exportExpression(endValue)
-			end.value = result.createInputValue(expr.name, end.end.type)
-			expr.objectFlow(end.value)
-		}	
+		val expr = endValue?.exportExpression ?: thisRef(end.end.type)
+		end.value = result.createInputValue(expr.name, end.end.type)
+		expr.objectFlow(end.value)
 		return end
 	}
-	
+
 	protected def fetchAssocFromEnd(ITypeBinding endType) {
 		fetchElement(endType.declaringClass) as Association
 	}
