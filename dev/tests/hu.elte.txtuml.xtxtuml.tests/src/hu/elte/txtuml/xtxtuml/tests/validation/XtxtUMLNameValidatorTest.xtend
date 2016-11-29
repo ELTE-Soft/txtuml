@@ -69,11 +69,13 @@ class XtxtUMLNameValidatorTest {
 			}
 		'''.parse.assertNoError(RESERVED_NAME);
 
-		'''
+		val rawFile = '''
 			signal S {
 				int goto;
 			}
-		'''.parse.assertError(TU_SIGNAL_ATTRIBUTE, RESERVED_NAME, 17, 4);
+		''';
+
+		rawFile.parse.assertError(TU_SIGNAL_ATTRIBUTE, RESERVED_NAME, rawFile.indexOf("goto"), 4);
 	}
 
 	@Test
