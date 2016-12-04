@@ -12,6 +12,8 @@ import hu.elte.txtuml.xtxtuml.xtxtUML.TUComposition
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUConnector
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUConnectorEnd
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUConstructor
+import hu.elte.txtuml.xtxtuml.xtxtUML.TUDataType
+import hu.elte.txtuml.xtxtuml.xtxtUML.TUDataTypeMember
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUEntryOrExitActivity
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUExecution
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUFile
@@ -73,8 +75,14 @@ class XtxtUMLFormatter extends XbaseFormatter {
 		format(body, document);
 	}
 
+	def dispatch void format(TUDataType it, extension IFormattableDocument document) {
+		formatBlockElement(it, document, regionFor.keyword('data-type'), members, false);
+		regionFor.keyword('extends').surround[oneSpace];
+	}
+
 	def dispatch void format(TUSignal it, extension IFormattableDocument document) {
 		formatBlockElement(it, document, regionFor.keyword('signal'), attributes, false);
+		regionFor.keyword('extends').surround[oneSpace];
 	}
 
 	def dispatch void format(TUClass it, extension IFormattableDocument document) {

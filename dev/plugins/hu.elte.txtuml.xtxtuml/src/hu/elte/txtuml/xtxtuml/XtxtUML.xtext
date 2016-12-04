@@ -24,6 +24,7 @@ TUModelDeclaration :
 
 TUModelElement
 	: TUExecution
+	| TUDataType
 	| TUSignal
 	| TUClass
 	| TUAssociation
@@ -36,8 +37,14 @@ TUExecution :
 		body=XBlockExpression ';'?
 ;
 
+TUDataType :
+	'data-type' name=ValidID ('extends' superDataType=[TUDataType|QualifiedName])? ('{'
+		members+=TUDataTypeMember*
+	'}' ';'? | ';' )
+;
+
 TUSignal :
-	'signal' name=ValidID ('{'
+	'signal' name=ValidID ('extends' superSignal=[TUSignal|QualifiedName])? ('{'
 		attributes+=TUSignalAttribute*
 	'}' ';'? | ';')
 ;
@@ -77,6 +84,14 @@ TUConnectorEnd :
 // Inner element level
 
 // Signal- and Class-related
+
+TUDataTypeMember :
+	TUAttributeOrOperationDeclarationPrefix (
+		{TUAttribute.prefix=current} name=ValidID ';' |
+		{TUOperation.prefix=current} name=ValidID '(' (parameters+=FullJvmFormalParameter (',' parameters+=FullJvmFormalParameter)*)? ')'
+			body=XBlockExpression ';'?
+	  )
+;
 
 /*
  * TODO replace with general TUAttribute

@@ -8,6 +8,7 @@ import hu.elte.txtuml.api.model.Composition.Container
 import hu.elte.txtuml.api.model.Composition.HiddenContainer
 import hu.elte.txtuml.api.model.Connector
 import hu.elte.txtuml.api.model.ConnectorBase.One
+import hu.elte.txtuml.api.model.DataType
 import hu.elte.txtuml.api.model.Delegation
 import hu.elte.txtuml.api.model.From
 import hu.elte.txtuml.api.model.Interface
@@ -28,6 +29,7 @@ import hu.elte.txtuml.xtxtuml.xtxtUML.TUComposition
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUConnector
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUConnectorEnd
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUConstructor
+import hu.elte.txtuml.xtxtuml.xtxtUML.TUDataType
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUEntryOrExitActivity
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUExecution
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUInterface
@@ -46,6 +48,8 @@ import hu.elte.txtuml.xtxtuml.xtxtUML.TUTransitionPort
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUTransitionTrigger
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUTransitionVertex
 import hu.elte.txtuml.xtxtuml.xtxtUML.TUVisibility
+import java.util.Deque
+import java.util.LinkedList
 import java.util.Map
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.common.types.JvmDeclaredType
@@ -108,25 +112,58 @@ class XtxtUMLJvmModelInferrer extends AbstractModelInferrer {
 	def dispatch void infer(TUSignal signal, IJvmDeclaredTypeAcceptor acceptor, boolean isPreIndexingPhase) {
 		acceptor.accept(signal.toClass(signal.fullyQualifiedName)) [
 			documentation = signal.documentation
-			superTypes += Signal.typeRef
+			if (signal.superSignal != null) {
+				superTypes += signal.superSignal.inferredTypeRef
+			} else {
+				superTypes += Signal.typeRef
+			}
 
 			for (attr : signal.attributes) {
 				members += attr.toJvmMember
 			}
 
-			if (!signal.attributes.isEmpty) {
-				members += signal.toConstructor [
-					for (attr : signal.attributes) {
-						parameters += attr.toParameter(attr.name, attr.type)
+			members += signal.toConstructor [
+				val Deque<TUSignal> supers = new LinkedList
+				var t = signal.superSignal
+				while (t != null) {
+					supers.add(t)
+					t = t.superSignal
+				}
+				val Deque<TUSignalAttribute> superAttributes = new LinkedList
+				while (!supers.empty) {
+					superAttributes.addAll(supers.last.attributes)
+					supers.removeLast
+				}
+
+				for (attr : superAttributes) {
+					parameters += attr.toParameter(attr.name, attr.type)
+				}
+				for (attr : signal.attributes) {
+					parameters += attr.toParameter(attr.name, attr.type)
+				}
+
+				val lastSuperAttribute = if (superAttributes.empty) {
+						null
+					} else {
+						val tmp = superAttributes.last
+						superAttributes.removeLast
+						tmp
 					}
 
-					body = '''
-						«FOR attr : signal.attributes»
-							this.«attr.name» = «attr.name»;
+				body = '''
+					super(
+						«FOR attr : superAttributes»
+							«attr.name», 
 						«ENDFOR»
-					'''
-				]
-			}
+						«IF lastSuperAttribute != null»
+							«lastSuperAttribute.name»
+						«ENDIF»
+					);
+					«FOR attr : signal.attributes»
+						this.«attr.name» = «attr.name»;
+					«ENDFOR»
+				'''
+			]
 		]
 	}
 
@@ -153,6 +190,79 @@ class XtxtUMLJvmModelInferrer extends AbstractModelInferrer {
 				register(member, acceptor, isPreIndexingPhase)
 			}
 		}
+	}
+
+	def dispatch void infer(TUDataType dataType, IJvmDeclaredTypeAcceptor acceptor, boolean isPreIndexingPhase) {
+		acceptor.accept(dataType.toClass(dataType.fullyQualifiedName)) [
+			documentation = dataType.documentation
+			if (dataType.superDataType != null) {
+				superTypes += dataType.superDataType.inferredTypeRef
+			} else {
+				superTypes += DataType.typeRef
+			}
+
+			for (member : dataType.members) {
+				if (!(member instanceof TUAttributeOrOperationDeclarationPrefix)) {
+					members += member.toJvmMember
+				}
+			}
+
+			members += dataType.toConstructor [
+				val Deque<TUDataType> supers = new LinkedList
+				var t = dataType.superDataType
+				while (t != null) {
+					supers.add(t)
+					t = t.superDataType
+				}
+				val Deque<TUAttribute> superAttributes = new LinkedList
+				while (!supers.empty) {
+					superAttributes.addAll(supers.last.members.filter[it instanceof TUAttribute].map[it as TUAttribute])
+					supers.removeLast
+				}
+
+				for (attr : superAttributes) {
+					parameters += attr.toParameter(attr.name, attr.prefix.type)
+				}
+				for (attr : dataType.members) {
+					if (attr instanceof TUAttribute) {
+						parameters += attr.toParameter(attr.name, attr.prefix.type)
+					}
+				}
+
+				val lastSuperAttribute = if (superAttributes.empty) {
+						null
+					} else {
+						val tmp = superAttributes.last
+						superAttributes.removeLast
+						tmp
+					}
+
+				body = '''
+					super(
+						«FOR attr : superAttributes»
+							«IF attr instanceof TUAttribute»
+								«attr.name»,
+							«ENDIF» 
+						«ENDFOR»
+						«IF lastSuperAttribute != null»
+							«lastSuperAttribute.name»
+						«ENDIF»
+					);
+					«FOR attr : dataType.members»
+						«IF attr instanceof TUAttribute»
+							this.«attr.name» = «attr.name»;
+						«ENDIF»
+					«ENDFOR»
+				'''
+			]
+
+			for (member : dataType.members) {
+				if (!(member instanceof TUAttributeOrOperationDeclarationPrefix)) { // TODO refactor grammar
+					members += member.toJvmMember
+				}
+			}
+
+		]
 	}
 
 	def dispatch void infer(TUConnector connector, IJvmDeclaredTypeAcceptor acceptor, boolean isPreIndexingPhase) {
@@ -274,14 +384,19 @@ class XtxtUMLJvmModelInferrer extends AbstractModelInferrer {
 	def dispatch private toJvmMember(TUAttribute attr) {
 		attr.toField(attr.name, attr.prefix.type) [
 			documentation = attr.documentation
-			visibility = attr.prefix.visibility.toJvmVisibility
+			visibility = if (eContainer instanceof TUDataType) {
+						JvmVisibility.PUBLIC
+					} else {
+						attr.prefix.visibility.toJvmVisibility
+					}
 		]
 	}
 
 	def dispatch private toJvmMember(TUSignalAttribute attr) {
 		attr.toField(attr.name, attr.type) [
 			documentation = attr.documentation
-			visibility = attr.visibility.toJvmVisibility
+			visibility = JvmVisibility.PUBLIC
+			final = true
 		]
 	}
 

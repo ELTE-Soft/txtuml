@@ -84,7 +84,8 @@ class XtxtUMLTypeValidator extends XtxtUMLUniquenessValidator {
 	}
 
 	def protected isAllowedParameterType(JvmTypeReference typeRef, boolean isVoidAllowed) {
-		isAllowedAttributeType(typeRef, isVoidAllowed) || typeRef.isConformantWith(ModelClass)
+		isAllowedAttributeType(typeRef, isVoidAllowed) || typeRef.isConformantWith(ModelClass) ||
+			typeRef.isConformantWith(Signal)
 	}
 
 	def protected isAllowedAttributeType(JvmTypeReference typeRef, boolean isVoidAllowed) {
