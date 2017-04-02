@@ -49,7 +49,7 @@ public class Maybe<T> implements Collection<T> {
 	public final Iterator<T> iterator() {
 		return new Iterator<T>() {
 
-			private boolean hasNext = true;
+			private boolean hasNext = (obj != null);
 
 			@Override
 			public T next() {

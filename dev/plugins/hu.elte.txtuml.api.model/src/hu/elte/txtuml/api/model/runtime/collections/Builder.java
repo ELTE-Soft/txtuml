@@ -39,7 +39,7 @@ interface Builder<T, C extends Collection<T>> {
 
 	// create method
 
-	static <T, C extends Collection<T>, B extends java.util.Collection<T>> Builder<T, C> create(
+	public static <T, C extends Collection<T>, B extends java.util.Collection<T>> Builder<T, C> create(
 			Supplier<B> backendCollectionCreator, Function<B, C> immutableCollectionCreator) {
 		return new Builder<T, C>() {
 			private B backendCollection = backendCollectionCreator.get();

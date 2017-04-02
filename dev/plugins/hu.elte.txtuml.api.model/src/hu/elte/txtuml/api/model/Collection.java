@@ -204,7 +204,7 @@ public interface Collection<T> extends Iterable<T> {
 
 		@Override
 		public Collection<T> addAll(Collection<T> objects) {
-			return Sequence.of(objects);
+			return Sequence.copyOf(objects);
 		}
 
 		@Override

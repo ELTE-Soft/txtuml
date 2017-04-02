@@ -13,12 +13,15 @@ import hu.elte.txtuml.api.model.Collection;
  *
  * @param <T>
  *            the type of items contained in the collection
+ * @param <C>
+ *            the concrete type of this immutable collection
  * @param <B>
  *            the back-end java collection
  */
-public abstract class AbstractCollection<T, B extends java.util.Collection<T>> implements Collection<T> {
+public abstract class AbstractCollection<T, C extends AbstractCollection<T, C, B>, B extends java.util.Collection<T>>
+		implements Collection<T> {
 
-	private final B backend;
+	final B backend;
 
 	protected AbstractCollection(B backend) {
 		this.backend = backend;
@@ -28,10 +31,6 @@ public abstract class AbstractCollection<T, B extends java.util.Collection<T>> i
 	public Iterator<T> iterator() {
 		Iterator<T> it = backend.iterator();
 		return new Iterator<T>() {
-			// Note: this implementation does not override (willingly) the
-			// 'remove' method which (by default) throws an
-			// UnsupportedOperationException.
-
 			@Override
 			public boolean hasNext() {
 				return it.hasNext();
@@ -41,7 +40,17 @@ public abstract class AbstractCollection<T, B extends java.util.Collection<T>> i
 			public T next() {
 				return it.next();
 			}
+
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
 		};
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return count() == 0;
 	}
 
 	@Override
@@ -70,22 +79,23 @@ public abstract class AbstractCollection<T, B extends java.util.Collection<T>> i
 	}
 
 	@Override
-	public Collection<T> add(T element) {
+	public C add(T element) {
 		return createBuilder().addAll(backend).add(element).build();
 	}
 
 	@Override
-	public Collection<T> addAll(Collection<T> objects) {
+	public C addAll(Collection<T> objects) {
 		return createBuilder().addAll(backend).addAll(objects).build();
 	}
 
 	@Override
-	public Collection<T> remove(Object element) {
+	@SuppressWarnings("unchecked")
+	public C remove(Object element) {
 		if (element == null) {
-			return this;
+			return (C) this;
 		}
 
-		Builder<T, ? extends Collection<T>> builder = createBuilder();
+		Builder<T, ? extends C> builder = createBuilder();
 		Iterator<T> it = backend.iterator();
 		while (it.hasNext()) {
 			T e = it.next();
@@ -95,9 +105,9 @@ public abstract class AbstractCollection<T, B extends java.util.Collection<T>> i
 				builder.add(e);
 			}
 		}
-		return this;
+		return (C) this;
 	}
 
-	protected abstract Builder<T, ? extends AbstractCollection<T, B>> createBuilder();
+	protected abstract Builder<T, ? extends C> createBuilder();
 
 }

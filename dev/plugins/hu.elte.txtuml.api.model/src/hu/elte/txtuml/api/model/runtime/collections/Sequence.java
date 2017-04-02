@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import hu.elte.txtuml.api.model.Collection;
 
 /**
- * An immutable ordered collection which may contain any number of elements
- * (including zero).
+ * An immutable set (unique unordered collection) which may contain any number
+ * of elements (including zero).
  * <p>
  * See the documentation of {@link hu.elte.txtuml.api.model.Model} for an
  * overview on modeling in JtxtUML.
@@ -14,7 +14,7 @@ import hu.elte.txtuml.api.model.Collection;
  * @param <T>
  *            the type of the contained elements
  */
-public class Sequence<T> extends AbstractCollection<T, ArrayList<T>> implements Collection<T> {
+public class Sequence<T> extends AbstractCollection<T, Sequence<T>, ArrayList<T>> implements Collection<T> {
 
 	static <T> Builder<T, Sequence<T>> builder() {
 		return Builder.create(ArrayList::new, Sequence<T>::new);
@@ -28,10 +28,33 @@ public class Sequence<T> extends AbstractCollection<T, ArrayList<T>> implements 
 	}
 
 	/**
-	 * Creates a {@code Sequence} which will contain the elements of the given
-	 * collection.
+	 * Creates a {@code Sequence} which will contain the given elements.
 	 */
-	public static <T> Sequence<T> of(Collection<T> elements) {
+	@SafeVarargs
+	public static <T> Sequence<T> of(T... elements) {
+		Builder<T, Sequence<T>> builder = builder();
+		for (T elem : elements) {
+			builder.add(elem);
+		}
+		return builder.build();
+	}
+
+	/**
+	 * Returns the element of this mutable sequence at a certain index.
+	 * 
+	 * @param index
+	 *            the index of the required element
+	 * @return the element at the given index
+	 */
+	public T at(int index) {
+		return backend.get(index);
+	}
+
+	/**
+	 * Creates a {@code Sequence} which will contain the elements of the given
+	 * iterable.
+	 */
+	public static <T> Sequence<T> copyOf(Iterable<T> elements) {
 		return Sequence.<T> builder().addAll(elements).build();
 	}
 
