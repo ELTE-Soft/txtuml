@@ -1,234 +1,65 @@
 package hu.elte.txtuml.api.model;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Spliterator;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 
-import hu.elte.txtuml.api.model.runtime.collections.Maybe;
-import hu.elte.txtuml.api.model.runtime.collections.Sequence;
+import com.google.common.collect.ImmutableMultiset;
 
-/**
- * Base interface for immutable collections.
- * 
- * <p>
- * <b>Represents:</b> collection
- * <p>
- * <b>Usage:</b>
- * <p>
- * 
- * After getting an object which implements this interface, call its methods
- * anywhere from the model where action code or condition evaluation is written.
- * <p>
- * See the documentation of {@link Model} for details about the action language
- * and condition evaluations in the model.
- * 
- * <p>
- * <b>Java restrictions:</b>
- * <ul>
- * <li><i>Define subtype:</i> disallowed, use its predefined subclasses instead,
- * like {@link Collection.Empty} or {@link AssociationEnd}</li>
- * </ul>
- * 
- * <p>
- * See the documentation of {@link Model} for an overview on modeling in
- * JtxtUML.
- *
- * @param <T>
- *            the type of objects to be contained in this collection
- * @see Collection.Empty
- * @see AssociationEnd
- */
-public interface Collection<T> extends Iterable<T> {
+import hu.elte.txtuml.api.model.GeneralCollection.NonUnique;
+import hu.elte.txtuml.api.model.GeneralCollection.Unordered;
 
-	/**
-	 * Checks if this collection is empty.
-	 * 
-	 * @return <code>true</code> if this collection is empty; <code>false</code>
-	 *         otherwise
-	 */
+// TODO document
+public abstract class Collection<E, C extends Collection<E, C>>
+		extends AbstractGeneralCollection<E, ImmutableMultiset<E>, C>
+		implements @External Unordered<E>, @External NonUnique<E> {
+
 	@ExternalBody
-	default boolean isEmpty() {
-		return count() == 0;
+	protected Collection() {
 	}
 
 	/**
-	 * Returns the number of elements in this collection.
-	 * 
-	 * @return the size of this collection
+	 * Must be used with extreme care as this constructor sets the backend of
+	 * this collection without any multiplicity checks.
 	 */
-	@ExternalBody
-	int count();
+	Collection(ImmutableMultiset<E> backend) {
+		super(backend);
+	}
 
-	/**
-	 * Checks whether a certain model object is in this collection.
-	 * 
-	 * @param element
-	 *            the model object to check
-	 * @return <code>true</code> if this collection contains the specified
-	 *         <code>object</code>; <code>false</code> otherwise
-	 */
 	@ExternalBody
-	boolean contains(Object element);
-
-	/**
-	 * Selects an element of this collection. Neither randomness, nor any
-	 * iteration order is guaranteed, this method is allowed to return the same
-	 * object each time it is called on the same collection.
-	 * 
-	 * @return an element of this collection, <code>null</code> if the
-	 *         collection is empty
-	 */
-	@ExternalBody
-	T selectAny();
-
-	/**
-	 * Selects all elements of this collection for which the specified condition
-	 * holds.
-	 * 
-	 * @param pred
-	 *            a condition to filter the elements of this collection
-	 * @return a new collection containing the selected elements
-	 * @throws NullPointerException
-	 *             if <code>pred</code> is <code>null</code>
-	 */
-	@ExternalBody
-	Collection<T> selectAll(Predicate<T> pred);
-
-	/**
-	 * Creates a new collection which contains all the elements of this
-	 * collection and also the specified object.
-	 *
-	 * @param element
-	 *            the object to be included in the result collection
-	 * @return a new collection containing the desired elements
-	 */
-	@ExternalBody
-	Collection<T> add(T element);
-
-	/**
-	 * Creates a new collection which contains all the elements of this
-	 * collection and also the elements of the specified collection.
-	 *
-	 * @param elements
-	 *            the other collection which's elements are to be included in
-	 *            the result
-	 * @return a new collection containing the desired elements
-	 * @throws NullPointerException
-	 *             if <code>objects</code> is <code>null</code>
-	 */
-	@ExternalBody
-	Collection<T> addAll(Collection<T> elements);
-
-	/**
-	 * Creates a new collection which contains all the elements of this
-	 * collection without the specified object (if it was included in the
-	 * collection).
-	 *
-	 * @param element
-	 *            the object <i>not</i> to be included in the result collection
-	 * @return a new collection containing the desired elements
-	 */
-	@ExternalBody
-	Collection<T> remove(Object element);
-
-	/**
-	 * This method <b>must not be used in the model</b>.
-	 */
 	@Override
-	@ExternalBody
-	default Spliterator<T> spliterator() {
-		return Iterable.super.spliterator();
+	@SuppressWarnings("unchecked")
+	public final <C2 extends GeneralCollection<? super E>, C3 extends GeneralCollection<?>> C2 as(
+			Class<C3> collectionType) {
+		if (Unordered.class.isAssignableFrom(collectionType) && NonUnique.class.isAssignableFrom(collectionType)) {
+			return (C2) asUnsafe(collectionType);
+		} else {
+			// TODO exception handling
+			throw new Error();
+		}
 	}
 
-	/**
-	 * A default implementation for an empty collection.
-	 * 
-	 * <p>
-	 * <b>Represents:</b> empty collection
-	 * <p>
-	 * <b>Java restrictions:</b>
-	 * <ul>
-	 * <li><i>Instantiate:</i> allowed</li>
-	 * <li><i>Define subtype:</i> disallowed</li>
-	 * </ul>
-	 * <p>
-	 * See the documentation of {@link Model} for an overview on modeling in
-	 * JtxtUML.
-	 *
-	 * @param <T>
-	 *            the type of objects to be contained in this collection
-	 * @see Collection
-	 */
-	public static final class Empty<T> implements Collection<T> {
-		@Override
-		@ExternalBody
-		public Iterator<T> iterator() {
-			return new Iterator<T>() {
-				@Override
-				public boolean hasNext() {
-					return false;
-				}
+	@ExternalBody
+	@Override
+	public final int countOf(E element) {
+		return getBackend().count(element);
+	}
 
-				@Override
-				public T next() {
-					throw new NoSuchElementException();
-				}
+	@ExternalBody
+	@Override
+	public final Any<E> unbound() {
+		return new Any<>(getBackend());
+	}
 
-				@Override
-				public void remove() {
-					throw new UnsupportedOperationException();
-				}
-			};
-		}
+	@Override
+	ImmutableMultiset<E> createBackend(Consumer<Builder<E>> backendBuilder) {
+		ImmutableMultiset.Builder<E> builder = ImmutableMultiset.builder();
+		backendBuilder.accept(builder::add);
+		return builder.build();
+	}
 
-		@Override
-		@ExternalBody
-		public boolean isEmpty() {
-			return true;
-		}
-
-		@Override
-		@ExternalBody
-		public int count() {
-			return 0;
-		}
-
-		@Override
-		@ExternalBody
-		public boolean contains(Object object) {
-			return false;
-		}
-
-		@Override
-		@ExternalBody
-		public T selectAny() {
-			return null;
-		}
-
-		@Override
-		@ExternalBody
-		public Collection<T> selectAll(Predicate<T> cond) {
-			return this;
-		}
-
-		@Override
-		@ExternalBody
-		public Collection<T> add(T object) {
-			return Maybe.of(object);
-		}
-
-		@Override
-		@ExternalBody
-		public Collection<T> addAll(Collection<T> objects) {
-			return Sequence.of(objects);
-		}
-
-		@Override
-		@ExternalBody
-		public Collection<T> remove(Object object) {
-			return this;
-		}
+	@ExternalBody
+	@Override
+	public final String toString() {
+		return "[" + super.toString() + "]";
 	}
 
 }
