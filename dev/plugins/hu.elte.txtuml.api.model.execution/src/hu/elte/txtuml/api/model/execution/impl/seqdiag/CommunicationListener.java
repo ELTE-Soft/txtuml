@@ -11,6 +11,7 @@ import hu.elte.txtuml.api.model.execution.TraceListener;
 import hu.elte.txtuml.api.model.seqdiag.BaseCombinedFragmentWrapper;
 import hu.elte.txtuml.api.model.seqdiag.BaseFragmentWrapper;
 import hu.elte.txtuml.api.model.seqdiag.BaseMessageWrapper;
+import hu.elte.txtuml.api.model.seqdiag.ExecMode;
 
 public class CommunicationListener extends AbstractSequenceDiagramModelListener implements TraceListener {
 
@@ -25,15 +26,18 @@ public class CommunicationListener extends AbstractSequenceDiagramModelListener 
 		sentSignal = null;
 	}
 
+	@Override
 	public void executionStarted() {
 
 	}
 
+	@Override
 	public void sendingSignal(ModelClass sender, Signal signal) {
 		currentSender = sender;
 		sentSignal = signal;
 	}
 
+	@Override
 	public void processingSignal(ModelClass object, Signal signal) {
 
 		if (suggestedMessagePattern == null) {
@@ -60,10 +64,11 @@ public class CommunicationListener extends AbstractSequenceDiagramModelListener 
 						"Something went bad while parsing the model - invalid model was parsed");
 			}
 		} else {
-			if (suggestedMessagePattern instanceof BaseCombinedFragmentWrapper
+			if (this.executor.getThread().getRuntime().getExecutionMode() != ExecMode.LENIENT
+					&& suggestedMessagePattern instanceof BaseCombinedFragmentWrapper
 					&& ((BaseCombinedFragmentWrapper) suggestedMessagePattern).hasOverlapWarning()) {
 				executor.addError(
-						new InvalidMessageError(object, "The model sent more signals than the pattern ovelapped"));
+						new InvalidMessageError(object, "The model sent more signals than the pattern overlapped"));
 			}
 		}
 
@@ -71,15 +76,19 @@ public class CommunicationListener extends AbstractSequenceDiagramModelListener 
 		sentSignal = null;
 	}
 
+	@Override
 	public void usingTransition(ModelClass object, Transition transition) {
 	}
 
+	@Override
 	public void enteringVertex(ModelClass object, Vertex vertex) {
 	}
 
+	@Override
 	public void leavingVertex(ModelClass object, Vertex vertex) {
 	}
 
+	@Override
 	public void executionTerminated() {
 	}
 

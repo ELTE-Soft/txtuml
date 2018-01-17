@@ -17,5 +17,4 @@ public interface SignalTargetWrapper<W> extends Wrapper<W>, RuntimeInfo {
 	 * Thread-safe.
 	 */
 	void send(Signal signal);
-
 }
