@@ -6,7 +6,6 @@ Bundle-Version: 0.6.0.qualifier
 Require-Bundle: hu.elte.txtuml.api.model.execution,
  hu.elte.txtuml.api.model,
  hu.elte.txtuml.utils,
- hu.elte.txtuml.utils.eclipse,
  org.eclipse.core.runtime,
  org.eclipse.jdt.core,
  org.eclipse.core.resources,
@@ -15,7 +14,9 @@ Require-Bundle: hu.elte.txtuml.api.model.execution,
  org.eclipse.ui,
  org.eclipse.core.expressions,
  org.eclipse.ui.console,
- com.google.guava
+ com.google.guava,
+ hu.elte.txtuml.wizards,
+ hu.elte.txtuml.utils.eclipse
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-Vendor: ELTE
 Export-Package: hu.elte.txtuml.seqdiag.export.plantuml,
