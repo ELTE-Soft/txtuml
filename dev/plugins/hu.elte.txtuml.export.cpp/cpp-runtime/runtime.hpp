@@ -14,15 +14,15 @@
 
 #include "StateMachineOwner.hpp"
 #include "threadpool.hpp"
+#include "threadconfiguration.hpp"
 #include "ievent.hpp"
-#include "threadpoolmanager.hpp"
 #include "ESRoot/Types.hpp"
 #include "ESRoot/AtomicCounter.hpp"
 
 namespace Execution 
 {
 
-template<typename RuntimeType, int NC>
+template<typename RuntimeType>
 class IRuntime
 {
 public:
@@ -30,7 +30,7 @@ public:
 	/*!
 	Returns the runtime instance during the model execution.
 	*/
-	static ES::RuntimePtr<RuntimeType,NC> getRuntimeInstance()
+	static ES::RuntimePtr<RuntimeType> getRuntimeInstance()
 	{
 		std::call_once (runtimeInstanceInitFlag, initRuntime);
 		return instance;
@@ -48,26 +48,11 @@ public:
 
 
 	/*!
-	Removes a state machine from the runtime instance when
-	the threaded runtime can record the number of object instances during the model execution.
-	Called by the state machine destructor.
-	*/
-	void removeObject(ES::StateMachineRef sm)
-	{
-		static_cast<RuntimeType*>(this)->removeObject(sm);
-	}
-
-
-	/*!
 	Sets the deployment configuration for the threaded runtime instance.
 	*/
-	void configure(std::array<ES::SharedPtr<Configuration>, NC> configuration)
+	void configure(const std::vector<Configuration>& conf)
 	{
-		if (!(static_cast<RuntimeType*>(this)->isConfigurated()))
-		{
-			static_cast<RuntimeType*>(this)->setConfiguration(configuration);
-		}
-
+		static_cast<RuntimeType*>(this)->setConfiguration(conf);
 	}
 
 	/*!
@@ -97,12 +82,11 @@ private:
 		instance = RuntimeType::createRuntime ();
 
 	}
-	static ES::RuntimePtr<RuntimeType, NC> instance;
+	static ES::RuntimePtr<RuntimeType> instance;
 	static std::once_flag				   runtimeInstanceInitFlag;
 };
 
-template<int NC>
-class SingleThreadRT : public IRuntime<SingleThreadRT<NC>, NC>
+class SingleThreadRT : public IRuntime<SingleThreadRT>
 {
 public:
 	virtual ~SingleThreadRT();
@@ -113,21 +97,18 @@ public:
 	void start();
 
 	void setupObjectSpecificRuntime(ES::StateMachineRef);
-	void removeObject(ES::StateMachineRef);
-	void setConfiguration(std::array<ES::SharedPtr<Configuration>,NC>);
-	bool isConfigurated();
+	void setConfiguration(const std::vector<Configuration>& conf);
 	void stopUponCompletion();
-	static ES::RuntimePtr<SingleThreadRT, NC> createRuntime () { return ES::RuntimePtr<SingleThreadRT<NC>, NC> (new SingleThreadRT<NC> ()); }
+	static ES::RuntimePtr<SingleThreadRT> createRuntime () { return ES::RuntimePtr<SingleThreadRT> (new SingleThreadRT ()); }
 private:
-	SingleThreadRT ();
+	// SingleThreadRT
+	SingleThreadRT() :_messageQueue(new ES::MessageQueueType()) {}
 	ES::SharedPtr<ES::MessageQueueType> _messageQueue;
 
 };
 
-template<int NC>
-class ConfiguredThreadedRT : public IRuntime<ConfiguredThreadedRT<NC>,NC>
+class ConfiguredThreadedRT : public IRuntime<ConfiguredThreadedRT>
 {
-	typedef typename std::array<unsigned, NC>::size_type id_type;
 public:
 	virtual ~ConfiguredThreadedRT();
 	/*!
@@ -136,15 +117,12 @@ public:
 	void start();
 
 	void setupObjectSpecificRuntime(ES::StateMachineRef);
-	void removeObject(ES::StateMachineRef);
-	void setConfiguration(std::array<ES::SharedPtr<Configuration>, NC>);
-	bool isConfigurated();
+	void setConfiguration(const std::vector<Configuration>& conf);
 	void stopUponCompletion();
-	static ES::RuntimePtr<ConfiguredThreadedRT, NC> createRuntime () { return ES::RuntimePtr<ConfiguredThreadedRT<NC>, NC> (new ConfiguredThreadedRT<NC> ()); }
+	static ES::RuntimePtr<ConfiguredThreadedRT> createRuntime () { return ES::RuntimePtr<ConfiguredThreadedRT> (new ConfiguredThreadedRT ()); }
 private:
 	ConfiguredThreadedRT ();
-	ES::SharedPtr<ThreadPoolManager<NC>> poolManager;
-	std::array<unsigned, NC> numberOfObjects;
+	std::vector<Configuration> configurations;
 
 	ES::SharedPtr<ES::AtomicCounter> worker;
 	ES::SharedPtr<ES::AtomicCounter> messages;
@@ -154,133 +132,12 @@ private:
 
 
 
-template<typename RuntimeType, int NC>
-ES::RuntimePtr<RuntimeType,NC> IRuntime<RuntimeType, NC>::instance = nullptr;
-template<typename RuntimeType, int NC>
-std::once_flag				 IRuntime<RuntimeType, NC>::runtimeInstanceInitFlag;
+template<typename RuntimeType>
+ES::RuntimePtr<RuntimeType> IRuntime<RuntimeType>::instance = nullptr;
 
-// SingleThreadRT
-template<int NC>
-SingleThreadRT<NC>::SingleThreadRT() :_messageQueue(new ES::MessageQueueType()) {}
+template<typename RuntimeType>
+std::once_flag				 IRuntime<RuntimeType>::runtimeInstanceInitFlag;
 
-template<int NC>
-void SingleThreadRT<NC>::setupObjectSpecificRuntime(ES::StateMachineRef sm)
-{
-	sm->setMessageQueue(_messageQueue);
-	sm->setMessageCounter(ES::SharedPtr<ES::AtomicCounter>(new ES::AtomicCounter()));
-}
-
-template<int NC>
-SingleThreadRT<NC>::~SingleThreadRT()
-{
-}
-
-template<int NC>
-bool SingleThreadRT<NC>::isConfigurated()
-{
-	return true;
-}
-
-template<int NC>
-void SingleThreadRT<NC>::start()
-{
-
-	while (!_messageQueue->isEmpty())
-	{
-		ES::EventRef e = _messageQueue->next();
-		if (Model::IEvent<Model::EventBase>::eventIsValid(e)) {
-			const ES::StateMachineRef sm = e->getTargetSM();
-			sm->processNextEvent();
-		}
-		else {
-			_messageQueue->dequeue(e); // drop event
-		}
-
-
-	}
-
-}
-
-template<int NC>
-void SingleThreadRT<NC>::setConfiguration(std::array<ES::SharedPtr<Configuration>, NC>) {}
-
-template<int NC>
-void SingleThreadRT<NC>::stopUponCompletion() {}
-
-template<int NC>
-void SingleThreadRT<NC>::removeObject(ES::StateMachineRef) {}
-
-// ConfiguredThreadedRT
-template<int NC>
-ConfiguredThreadedRT<NC>::ConfiguredThreadedRT () :
-	poolManager (new ThreadPoolManager<NC> ()),
-	worker (new ES::AtomicCounter ()),
-	messages (new ES::AtomicCounter ()) {}
-
-template<int NC>
-ConfiguredThreadedRT<NC>::~ConfiguredThreadedRT () {}
-
-template<int NC>
-void ConfiguredThreadedRT<NC>::start ()
-{
-	assert (isConfigurated () && "The configurated threaded runtime should be configured before starting.");
-
-	if (isConfigurated ())
-	{
-		for (id_type i = 0; i < (id_type)NC; i++)
-		{
-			ES::SharedPtr<StateMachineThreadPool> pool = poolManager->getPool (i);
-			pool->setWorkersCounter (worker);
-			pool->setMessageCounter (messages);
-			pool->setStopReqest (&stop_request_cond);
-			pool->startPool (poolManager->calculateNOfThreads (i,numberOfObjects[i]));
-		}
-	}
-}
-
-template<int NC>
-void ConfiguredThreadedRT<NC>::removeObject (ES::StateMachineRef sm)
-{
-	id_type objectId = (id_type) sm->getPoolId ();
-	numberOfObjects[objectId]--;
-	poolManager->recalculateThreads (objectId, numberOfObjects[objectId]);
-}
-
-template<int NC>
-void ConfiguredThreadedRT<NC>::stopUponCompletion ()
-{
-	for (int i = 0; i < NC; i++)
-	{
-		poolManager->getPool ((id_type)i)->stopUponCompletion ();
-	}
-}
-
-template<int NC>
-void ConfiguredThreadedRT<NC>::setupObjectSpecificRuntime (ES::StateMachineRef sm)
-{
-
-	sm->setMessageCounter (messages);
-	id_type objectId = (id_type)sm->getPoolId ();
-	ES::SharedPtr<StateMachineThreadPool> matchedPool = poolManager->getPool (objectId);
-	sm->setPool (matchedPool);
-	numberOfObjects[objectId]++;
-	poolManager->recalculateThreads (objectId, numberOfObjects[objectId]);
-}
-
-template<int NC>
-bool ConfiguredThreadedRT<NC>::isConfigurated ()
-{
-	return poolManager->isConfigurated ();
-}
-
-template<int NC>
-void ConfiguredThreadedRT<NC>::setConfiguration (std::array<ES::SharedPtr<Configuration>, NC> conf)
-{
-	poolManager->setConfiguration (conf);
-	for (id_type i = 0; i < numberOfObjects.size (); ++i) {
-		numberOfObjects[i] = 0;
-	}
-}
 
 }
 

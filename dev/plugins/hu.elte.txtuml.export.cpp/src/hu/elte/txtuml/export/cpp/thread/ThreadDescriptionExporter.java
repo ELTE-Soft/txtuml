@@ -1,13 +1,5 @@
 package hu.elte.txtuml.export.cpp.thread;
 
-import hu.elte.txtuml.api.model.ModelClass;
-import hu.elte.txtuml.utils.Pair;
-import hu.elte.txtuml.api.deployment.Configuration;
-import hu.elte.txtuml.api.deployment.Group;
-import hu.elte.txtuml.api.deployment.GroupContainer;
-import hu.elte.txtuml.api.deployment.Runtime;
-import hu.elte.txtuml.api.deployment.RuntimeType;
-
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,11 +8,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import hu.elte.txtuml.api.deployment.Configuration;
+import hu.elte.txtuml.api.deployment.Group;
+import hu.elte.txtuml.api.deployment.GroupContainer;
+import hu.elte.txtuml.api.deployment.Runtime;
+import hu.elte.txtuml.api.deployment.RuntimeType;
+import hu.elte.txtuml.api.model.ModelClass;
+
+
 public class ThreadDescriptionExporter {
 
 	private Map<String, ThreadPoolConfiguration> configMap;
 	private RuntimeType runtime;
+	private int allThread;
+	
 	private boolean descriptionExported = false;
+	private double sumRate;
 	private boolean runtimeTypeIsPresent = false;
 
 	private List<String> warningList;
@@ -42,8 +45,8 @@ public class ThreadDescriptionExporter {
 		errorList = new ArrayList<String>();
 	}
 
-	public Pair<RuntimeType, Map<String, ThreadPoolConfiguration>> getExportedConfiguration() {
-		return new Pair<>(runtime,configMap);
+	public ThreadDescription getExportedConfiguration() {
+		return new ThreadDescription(runtime,configMap);
 	}
 
 	public void exportDescription(Class<? extends Configuration> description) {
@@ -51,7 +54,8 @@ public class ThreadDescriptionExporter {
 		if (descriptionExported)
 			return;
 		
-		
+		sumRate = 0;
+		allThread = java.lang.Runtime.getRuntime().availableProcessors() + 1;
 		for (Annotation annotaion : description.getAnnotations()) {
 			if (annotaion instanceof GroupContainer) {
 
@@ -77,6 +81,12 @@ public class ThreadDescriptionExporter {
 			runtime = RuntimeType.THREADED;
 		}
 		exportDefaultConfiguration();
+		
+		if(sumRate > 1) {
+			warningList.add("The sum of all groups rate is greater than zero.\n "
+					+ "More thread will be created then number of cores.");
+		}
+		
 
 		descriptionExported = true;
 
@@ -113,9 +123,10 @@ public class ThreadDescriptionExporter {
 
 	private void exportGroup(Group group) {
 
-		checkConfigurationOptions(group.gradient(), group.constant(), group.max());
-
-		ThreadPoolConfiguration config = createNewPoolConfiguration(group.gradient(), group.constant(), group.max());
+		checkConfigurationOptions(group);
+		double rate = group.rate();
+		sumRate += rate;
+		ThreadPoolConfiguration config = createNewPoolConfiguration((int) Math.max(1, allThread  * rate));
 
 		checkEmptyGroup(group.contains());
 
@@ -130,8 +141,8 @@ public class ThreadDescriptionExporter {
 		}
 	}
 
-	private ThreadPoolConfiguration createNewPoolConfiguration(double gradient, int constant, int max) {
-		ThreadPoolConfiguration config = new ThreadPoolConfiguration(numberOfConfigurations, gradient, constant, max);
+	private ThreadPoolConfiguration createNewPoolConfiguration(int numberOfExecutors) {
+		ThreadPoolConfiguration config = new ThreadPoolConfiguration(numberOfConfigurations, numberOfExecutors);
 		numberOfConfigurations++;
 
 		return config;
@@ -144,7 +155,7 @@ public class ThreadDescriptionExporter {
 			nonExportedClasses.addAll(allModelClassName);
 			nonExportedClasses.removeAll(exportedClasses);
 
-			ThreadPoolConfiguration config = createNewPoolConfiguration(0, 1, 1);
+			ThreadPoolConfiguration config = createNewPoolConfiguration(1);
 			for (String uncategorizedClassName : nonExportedClasses) {
 				configMap.put(uncategorizedClassName, config);
 			}
@@ -159,22 +170,10 @@ public class ThreadDescriptionExporter {
 
 	}
 
-	private void checkConfigurationOptions(double gradient, int constant, int max) {
-		if (gradient < 0 || gradient > 1) {
-			warningList.add("The gradient of linear function should be between 0 and 1: " + "conversion to 0.");
+	private void checkConfigurationOptions(Group group) {
+		if (group.rate() < 0 || group.rate() > 1) {
+			warningList.add("The rate should be between 0 and 1: " + "conversion to 1.");
 		}
 
-		if (constant < 1) {
-			warningList.add("The constant of linear function should be higher than 0: " + "conversion to 1.");
-		}
-
-		if (max < 1) {
-			warningList.add("The maximum number of threads should be higher than 0: " + "conversion to 1.");
-		}
-
-		if (max < constant) {
-			warningList.add(
-					"The maximum number of threads should more or equal to constant: " + "conversion to the value of constant.");
-		}
 	}
 }

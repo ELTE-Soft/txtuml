@@ -12,14 +12,13 @@ import hu.elte.txtuml.api.deployment.GroupContainer;
 /**
  * <p>
  * Configures which classes go to the same thread pool. It defines the number of
- * threads according to a linear function parameterized by the number of created
- * objects. {@link #max} defines how many threads could be at most.
+ * threads according to the proportion of the processor cores.
  * 
  * <p>
  * <b>Example:</b>
  * 
  * <pre>
- * <code>@Group(contains = {A.class,B.class}, max = 10, constant = 5, gradient = 0.1)</code>
+ * <code>@Group(contains = {A.class,B.class}, rate=0.5)</code>
  * </pre>
  */
 
@@ -28,11 +27,6 @@ import hu.elte.txtuml.api.deployment.GroupContainer;
 @Repeatable(GroupContainer.class)
 public @interface Group {
 	Class<? extends ModelClass>[] contains();
-
-	double gradient() default 0;
-
-	int constant() default 1;
-
-	int max() default 1;
+	double rate();
 	
 }

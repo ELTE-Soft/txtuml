@@ -6,45 +6,26 @@
 
 #include "threadpool.hpp"
 #include "math.h"
+
 namespace Execution
 {
-
-/*! Represents a linear function. */
-class LinearFunction
-{
-public:
-	LinearFunction(unsigned constant, double gradient) :
-		_constant(constant),
-		_gradient(gradient) {}
-
-	unsigned operator()(unsigned n)
-	{
-		return (unsigned)round(_gradient * n) + _constant;
-	}
-private:
-	unsigned _constant;
-	double _gradient;
-};
-
 
 /*! Configuration parameters datastore. */
 class Configuration
 {
 public:
 
-	Configuration(ES::SharedPtr<StateMachineThreadPool> threadPool, ES::SharedPtr<LinearFunction> function, unsigned max) :
-		_threadPool(threadPool), _function(function), _max(max) {}
+	Configuration(ThreadPoolPtr threadPool, unsigned numberOfExecutors) :
+		_threadPool(threadPool), _numberOfExecutors(numberOfExecutors) {}
 	virtual ~Configuration() {}
 
-	ES::SharedPtr<StateMachineThreadPool> getThreadPool() const { return _threadPool; }
-	ES::SharedPtr<LinearFunction> getFunction() const { return _function; }
-	unsigned getMax() { return _max; }
+	ThreadPoolPtr getThreadPool() const { return _threadPool; }
+	unsigned getNumberOfExecutors() const { return _numberOfExecutors; }
 
 private:
 
-	ES::SharedPtr<StateMachineThreadPool> _threadPool;
-	ES::SharedPtr<LinearFunction> _function;
-	unsigned _max;
+	ThreadPoolPtr _threadPool;
+	unsigned _numberOfExecutors;
 };
 
 }
