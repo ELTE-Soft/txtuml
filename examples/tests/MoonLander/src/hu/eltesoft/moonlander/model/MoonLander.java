@@ -1,5 +1,6 @@
 package hu.eltesoft.moonlander.model;
 
+import hu.elte.txtuml.api.deployment.fmi.FMUEnvironment;
 import hu.elte.txtuml.api.model.Action;
 import hu.elte.txtuml.api.model.From;
 import hu.elte.txtuml.api.model.ModelClass;
@@ -12,7 +13,7 @@ public class MoonLander extends ModelClass {
 		
 	}
 	
-	public MoonLander(World world) {
+	public MoonLander(FMUEnvironment world) {
 		add();
 		Action.link(LanderWorld.world.class, world, LanderWorld.lander.class, this);
 	}
@@ -26,96 +27,105 @@ public class MoonLander extends ModelClass {
 	}
 	
 	public class FreeFall extends State {
-		
-		@Override
-		public void entry() {
-			World world = assoc(LanderWorld.world.class).one();
-			Action.send(new ControlSignal(0), world);
-		}
 	}
 	
-	@Trigger(ControlCycleSignal.class)
+	@Trigger(InputSignal.class)
 	@From(FreeFall.class)
 	@To(FreeFall.class)
 	public class RemainFF extends Transition {
 		@Override
 		public boolean guard() {
-			ControlCycleSignal signal = getTrigger(ControlCycleSignal.class);
+			InputSignal signal = getTrigger(InputSignal.class);
 			return signal.h >= 500 && signal.v >= -20;
+		}
+		
+		@Override
+		public void effect() {
+			FMUEnvironment world = assoc(LanderWorld.world.class).one();
+			Action.send(new OutputSignal(0), world);
 		}
 	}
 	
-	@Trigger(ControlCycleSignal.class)
+	@Trigger(InputSignal.class)
 	@From(FreeFall.class)
 	@To(Controlled.class)
 	public class FFtoControlled extends Transition {
 		@Override
 		public boolean guard() {
-			ControlCycleSignal signal = getTrigger(ControlCycleSignal.class);
+			InputSignal signal = getTrigger(InputSignal.class);
 			return signal.h < 500 || signal.v < -20;
+		}
+		
+		@Override
+		public void effect() {
+			InputSignal signal = getTrigger(InputSignal.class);
+			FMUEnvironment world = assoc(LanderWorld.world.class).one();
+			// better because of rounding in generated code
+			Action.send(new OutputSignal(signal.v*signal.h*signal.h/500000 - (-signal.v*signal.h/1000) - signal.v/2), world);
 		}
 	}
 
 	public class Controlled extends State {
-		
-		@Override
-		public void entry() {
-			World world = assoc(LanderWorld.world.class).one();
-			// better because of rounding in generated code
-			Action.send(new ControlSignal(world.v*world.h*world.h/500000 - (-world.v*world.h/1000) - world.v/2), world);
-		}
 	}
 	
-	@Trigger(ControlCycleSignal.class)
+	@Trigger(InputSignal.class)
 	@From(Controlled.class)
 	@To(Controlled.class)
 	public class StillControlled extends Transition {
 		@Override
 		public boolean guard() {
-			ControlCycleSignal signal = getTrigger(ControlCycleSignal.class);
+			InputSignal signal = getTrigger(InputSignal.class);
 			return signal.h >= 1;
+		}
+		
+		@Override
+		public void effect() {
+			InputSignal signal = getTrigger(InputSignal.class);
+			FMUEnvironment world = assoc(LanderWorld.world.class).one();
+			// better because of rounding in generated code
+			Action.send(new OutputSignal(signal.v*signal.h*signal.h/500000 - (-signal.v*signal.h/1000) - signal.v/2), world);
 		}
 	}
 	
-	@Trigger(ControlCycleSignal.class)
+	@Trigger(InputSignal.class)
 	@From(Controlled.class)
 	@To(SuccessfulLanding.class)
 	public class ControlledToLanding extends Transition {
 		@Override
 		public boolean guard() {
-			ControlCycleSignal signal = getTrigger(ControlCycleSignal.class);
+			InputSignal signal = getTrigger(InputSignal.class);
 			return signal.h < 1 && signal.v >= -10;
+		}
+		
+		@Override
+		public void effect() {
+			FMUEnvironment world = assoc(LanderWorld.world.class).one();
+			Action.send(new OutputSignal(0), world);
 		}
 	}
 
 	
 	public class SuccessfulLanding extends State {
-		
-		@Override
-		public void entry() {
-			World world = assoc(LanderWorld.world.class).one();
-			Action.send(new ControlSignal(0), world);
-		}
 	}
 	
-	@Trigger(ControlCycleSignal.class)
+	@Trigger(InputSignal.class)
 	@From(Controlled.class)
 	@To(Crashed.class)
 	public class ControlledToCrashed extends Transition {
 		@Override
 		public boolean guard() {
-			ControlCycleSignal signal = getTrigger(ControlCycleSignal.class);
+			InputSignal signal = getTrigger(InputSignal.class);
 			return signal.h < 1 && signal.v < -10;
+		}
+		
+		@Override
+		public void effect() {
+			FMUEnvironment world = assoc(LanderWorld.world.class).one();
+			Action.send(new OutputSignal(0), world);
 		}
 	}
 	
 	public class Crashed extends State {
-		
-		@Override
-		public void entry() {
-			World world = assoc(LanderWorld.world.class).one();
-			Action.send(new ControlSignal(0), world);
-		}
 	}
 	
 }

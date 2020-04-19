@@ -54,7 +54,7 @@ public class Uml2ToCppExporter {
 
 	private static final String RUNTIME_DIR_PREFIX = RuntimeTemplates.RTPath;
 	private static final String RUNTIME_LIB_NAME = "libsmrt";
-	private static final String PROJECT_NAME = "hu.elte.txtuml.export.cpp";
+	public static final String PROJECT_NAME = "hu.elte.txtuml.export.cpp";
 	private static final String CPP_FILES_FOLDER_NAME = "cpp-runtime";
 
 	// default sources

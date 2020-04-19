@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
+import hu.elte.txtuml.api.deployment.fmi.FMUEnvironment;
 import hu.elte.txtuml.api.model.Association;
 import hu.elte.txtuml.api.model.AssociationEnd;
 import hu.elte.txtuml.api.model.AssociationEnd.Container;
@@ -463,6 +464,10 @@ public final class ElementTypeTeller {
 	
 	public static boolean isCollection(ITypeBinding bnd) {
 		return SharedUtils.typeIsAssignableFrom(bnd, GeneralCollection.class);
+	}
+
+	public static boolean isFMUEnvironment(ITypeBinding binding) {
+	  	return SharedUtils.typeIsAssignableFrom(binding, FMUEnvironment.class);
 	}
 
 }

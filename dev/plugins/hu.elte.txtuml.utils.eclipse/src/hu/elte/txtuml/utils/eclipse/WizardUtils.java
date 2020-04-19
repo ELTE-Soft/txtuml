@@ -198,29 +198,32 @@ public class WizardUtils {
 					Arrays.asList(annotatedType.getJavaProject().getRequiredProjectNames()));
 			referencedProjects.add(annotatedType.getJavaProject().getElementName());
 			for (IAnnotation annot : annotatedType.getAnnotations()) {
-				List<Object> annotValues = Stream.of(annot.getMemberValuePairs())
-						.filter(mvp -> mvp.getValueKind() == IMemberValuePair.K_CLASS)
-						.flatMap(mvp -> Stream.of(mvp.getValue())).collect(Collectors.toList());
+				if (!annot.getElementName().equals(hu.elte.txtuml.api.deployment.Runtime.class.getSimpleName())) {
+					List<Object> annotValues = Stream.of(annot.getMemberValuePairs())
+							.filter(mvp -> mvp.getValueKind() == IMemberValuePair.K_CLASS)
+							.flatMap(mvp -> Stream.of(mvp.getValue())).collect(Collectors.toList());
 
-				if (annotValues.isEmpty()) {
-					throw new NoSuchElementException("Group is empty.");
-				}
-
-				for (Object val : annotValues) {
-					List<Object> annotations = new ArrayList<>();
-					if (val instanceof String) {
-						annotations.add(val);
-					} else {
-						annotations.addAll(Arrays.asList((Object[]) val));
+					if (annotValues.isEmpty()) {
+						throw new NoSuchElementException("Group is empty.");
 					}
 
-					for (Object v : annotations) {
-						String[][] resolvedTypes = resolveType(annotatedType, (String) v);
-						List<String[]> resolvedTypeList = new ArrayList<>(Arrays.asList(resolvedTypes));
-						for (String[] type : resolvedTypeList) {
-							Optional<Pair<String, String>> model = ModelUtils.getModelOf(type[0], referencedProjects);
-							if (model.isPresent()) {
-								return model;
+					for (Object val : annotValues) {
+						List<Object> annotations = new ArrayList<>();
+						if (val instanceof String) {
+							annotations.add(val);
+						} else {
+							annotations.addAll(Arrays.asList((Object[]) val));
+						}
+
+						for (Object v : annotations) {
+							String[][] resolvedTypes = resolveType(annotatedType, (String) v);
+							List<String[]> resolvedTypeList = new ArrayList<>(Arrays.asList(resolvedTypes));
+							for (String[] type : resolvedTypeList) {
+								Optional<Pair<String, String>> model = ModelUtils.getModelOf(type[0],
+										referencedProjects);
+								if (model.isPresent()) {
+									return model;
+								}
 							}
 						}
 					}

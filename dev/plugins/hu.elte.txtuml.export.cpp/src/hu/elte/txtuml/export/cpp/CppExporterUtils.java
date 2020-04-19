@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,8 +38,10 @@ import org.eclipse.uml2.uml.UMLPackage;
 import org.eclipse.uml2.uml.Usage;
 
 import hu.elte.txtuml.export.cpp.templates.GenerationNames;
-import hu.elte.txtuml.export.cpp.templates.PrivateFunctionalTemplates;
+import hu.elte.txtuml.export.cpp.templates.GenerationNames.CollectionNames;
 import hu.elte.txtuml.export.cpp.templates.GenerationNames.ModifierNames;
+import hu.elte.txtuml.export.cpp.templates.GenerationNames.PointerAndMemoryNames;
+import hu.elte.txtuml.export.cpp.templates.PrivateFunctionalTemplates;
 import hu.elte.txtuml.export.cpp.templates.activity.ActivityTemplates;
 import hu.elte.txtuml.utils.Pair;
 
@@ -219,15 +222,21 @@ public class CppExporterUtils {
 
 		return formattedSource;
 	}
-
+	
+	
 	public static String escapeQuates(String source) {
 		StringBuilder resultSource = new StringBuilder("");
-
+		
 		for (char ch : source.toCharArray()) {
 			if (ch == '"') {
-				resultSource.append("\\");
+				resultSource.append("\\\"");
 			}
-			resultSource.append(ch);
+			else if(ch == '\n') {
+				resultSource.append("\\n");
+			} else {
+				resultSource.append(ch);
+			}
+		
 		}
 
 		return resultSource.toString();
@@ -397,9 +406,19 @@ public class CppExporterUtils {
 		Process process = processBuilder.start();
 		return process.waitFor();
 	}
+	
+	public static String oneReadReference(String varName) {
+		return ActivityTemplates.operationCall(varName, PointerAndMemoryNames.SimpleAccess, 
+				CollectionNames.SelectAnyFunctionName, Collections.emptyList());
+	}
 
 	public static boolean isWindowsOS() {
 		return OPERATING_SYSTEM.toUpperCase().startsWith("WIN");
+	}
+	
+	public static String qualifiedNameToSimpleName(String qualifiedName) {
+		String[] nameParts = qualifiedName.split("\\.");
+		return nameParts[nameParts.length - 1];
 	}
 
 }

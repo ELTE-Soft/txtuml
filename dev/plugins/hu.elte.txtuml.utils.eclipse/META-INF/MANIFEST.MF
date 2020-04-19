@@ -18,6 +18,7 @@ Require-Bundle: hu.elte.txtuml.api.model,
  org.eclipse.ui.ide,
  org.eclipse.jdt.launching,
  org.eclipse.jdt.ui,
+ hu.elte.txtuml.api.deployment,
  org.eclipse.ui.workbench
 Import-Package: org.eclipse.ui.preferences
 Bundle-ActivationPolicy: lazy

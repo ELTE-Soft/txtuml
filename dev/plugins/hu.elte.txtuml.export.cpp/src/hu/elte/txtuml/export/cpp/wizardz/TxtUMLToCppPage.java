@@ -29,6 +29,7 @@ import org.eclipse.ui.dialogs.ElementTreeSelectionDialog;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 
 import hu.elte.txtuml.api.deployment.Configuration;
+import hu.elte.txtuml.api.deployment.fmi.FMIConfiguration;
 import hu.elte.txtuml.utils.eclipse.NotFoundException;
 import hu.elte.txtuml.utils.eclipse.PackageUtils;
 import hu.elte.txtuml.utils.eclipse.ProjectUtils;
@@ -47,10 +48,17 @@ public class TxtUMLToCppPage extends WizardPage {
 	private static IType threadManagerDescription;
 
 	private Button descriptionBrowser;
+	
+	private Button needsFMU;
+	private Text fmuDescription;
+	private Button fmuDescriptionBrowser;
 
 	private Button addRuntime;
 
 	private static String DESCRIPTION_NAME = "";
+
+	public static boolean FMU_NEEDED = false;
+	public static String FMU_CONFIG_FILE = "";
 
 	protected TxtUMLToCppPage() {
 		super("Generate C++ Code Page");
@@ -83,7 +91,7 @@ public class TxtUMLToCppPage extends WizardPage {
 		descriptionBrowser.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				ElementTreeSelectionDialog dialog = getConfigurationSelectionDialog();
+				ElementTreeSelectionDialog dialog = getConfigurationSelectionDialog(Configuration.class);
 				dialog.setAllowMultiple(false);
 				dialog.setValidator(new TypedElementSelectionValidator(new Class<?>[] { IType.class }, false));
 				dialog.setTitle("Configuration selection");
@@ -95,6 +103,57 @@ public class TxtUMLToCppPage extends WizardPage {
 					IType item = (IType) result[0];
 					threadManagerDescriptionText.setText(item.getFullyQualifiedName());
 					threadManagerDescription = item;
+				}
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+		});
+		
+		needsFMU = new Button(composite, SWT.CHECK);
+		needsFMU.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
+		needsFMU.setText("Generate FMU");
+		needsFMU.setSelection(FMU_NEEDED);
+		needsFMU.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				enableFields(e);
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				enableFields(e);
+			}
+
+			public void enableFields(SelectionEvent e) {
+				boolean selected = ((Button) e.widget).getSelection();
+				fmuDescription.setEnabled(selected);
+				fmuDescriptionBrowser.setEnabled(selected);
+			}
+		});
+		
+		fmuDescription = new Text(composite, SWT.BORDER | SWT.SINGLE);
+		fmuDescription.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		fmuDescription.setEnabled(FMU_NEEDED);
+		fmuDescription.setText(FMU_CONFIG_FILE);
+		
+		fmuDescriptionBrowser = new Button(composite, SWT.NONE);
+		fmuDescriptionBrowser.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		fmuDescriptionBrowser.setEnabled(FMU_NEEDED);
+		fmuDescriptionBrowser.setText("Browse...");
+		fmuDescriptionBrowser.addSelectionListener(new SelectionListener() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				ElementTreeSelectionDialog dialog = getConfigurationSelectionDialog(FMIConfiguration.class);
+				dialog.setTitle("Select FMU config");
+				dialog.setInput(ResourcesPlugin.getWorkspace().getRoot());
+				dialog.open();
+				Object[] result = dialog.getResult();
+				if (result != null && result.length > 0 && result[0] instanceof IType) {
+					IType item = (IType) result[0];
+					fmuDescription.setText(item.getFullyQualifiedName());
 				}
 			}
 
@@ -140,7 +199,15 @@ public class TxtUMLToCppPage extends WizardPage {
 		return false;
 	}
 
-	private ElementTreeSelectionDialog getConfigurationSelectionDialog() {
+	public boolean generateFMU() {
+		return needsFMU.getSelection();
+	}
+	
+	public String getFMUDescription() {
+		return fmuDescription.getText();
+	}
+
+	private ElementTreeSelectionDialog getConfigurationSelectionDialog(Class<?> searchedClass) {
 		return new ElementTreeSelectionDialog(composite.getShell(), WizardUtils.getPostQualifiedLabelProvider(),
 				new WorkbenchContentProvider() {
 					@Override
@@ -151,7 +218,8 @@ public class TxtUMLToCppPage extends WizardPage {
 							for (IProject pr : allProjects) {
 								try {
 									IJavaProject javaProject = ProjectUtils.findJavaProject(pr.getName());
-									if (WizardUtils.containsClassesWithDirectSuperTypes(javaProject, Configuration.class)) {
+									if (WizardUtils.containsClassesWithDirectSuperTypes(javaProject, searchedClass)) {
+
 										javaProjects.add(javaProject);
 									}
 								} catch (NotFoundException e) {
@@ -167,7 +235,8 @@ public class TxtUMLToCppPage extends WizardPage {
 							} catch (JavaModelException ex) {
 							}
 							List<IType> configTypes = packageFragments.stream()
-									.flatMap(pf -> WizardUtils.getTypesByDirectSuperclass(pf, Configuration.class).stream())
+									.flatMap(pf -> WizardUtils.getTypesByDirectSuperclass(pf, searchedClass).stream())
+
 									.collect(Collectors.toList());
 							return configTypes.toArray();
 						}

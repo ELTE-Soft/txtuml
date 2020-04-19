@@ -52,6 +52,7 @@ import hu.elte.txtuml.export.uml2.activity.statement.IfExporter
 import hu.elte.txtuml.export.uml2.activity.statement.ReturnStatementExporter
 import hu.elte.txtuml.export.uml2.activity.statement.VariableDeclarationExporter
 import hu.elte.txtuml.export.uml2.activity.statement.WhileExporter
+import hu.elte.txtuml.export.uml2.fmu.FMUEnvironmentExporter
 import hu.elte.txtuml.export.uml2.statemachine.ChoiceStateExporter
 import hu.elte.txtuml.export.uml2.statemachine.InitStateExporter
 import hu.elte.txtuml.export.uml2.statemachine.StateExporter
@@ -225,7 +226,7 @@ abstract class Exporter<S, A, R extends Element> extends BaseExporter<S, A, R> {
 			IPackageFragment:
 				#[new PackageExporter(this)]
 			ITypeBinding:
-				#[new StdlibClassExporter(this), new ClassExporter(this), new AssociationExporter(this),
+				#[new FMUEnvironmentExporter(this), new StdlibClassExporter(this), new ClassExporter(this), new AssociationExporter(this),
 					new AssociationEndExporter(this), new StateExporter(this), new InitStateExporter(this),
 					new ChoiceStateExporter(this), new DataTypeExporter(this), new TransitionExporter(this),
 					new SignalExporter(this), new InPortExporter(this), new OutPortExporter(this),
