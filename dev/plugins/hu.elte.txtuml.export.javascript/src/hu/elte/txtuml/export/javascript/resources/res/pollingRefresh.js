@@ -29,8 +29,15 @@ function refreshElements(queryPort){
 		if(!isPolling || currentPort != queryPort) return;
 
 		if(response.status == 200){
-			setActiveElements((JSON.parse(response.responseText))
-				.map(entry => _visualizer.getShapeIdByElementName(entry.location)));
+			var json = JSON.parse(response.responseText);
+			var activeElements = json
+				.filter(diag => !selector._selected || selector._selected.inst == diag.name)
+				.map(diag => _visualizer.getShapeIdByElementName(diag.location));
+			//skip update if current diagram does not change
+			if (activeElements.length > 0)
+				setActiveElements(activeElements);
+
+			selector.setInstances(json);
 			hideError();
 		}
 		else{
