@@ -7,24 +7,27 @@ import java.util.Set;
 
 import javax.xml.bind.annotation.XmlElement;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.persistence.oxm.annotations.XmlAccessMethods;
 import org.eclipse.uml2.uml.Association;
 import org.eclipse.uml2.uml.Classifier;
 
+import hu.elte.txtuml.export.diagrams.common.Point;
+import hu.elte.txtuml.export.diagrams.common.Rectangle;
+import hu.elte.txtuml.export.diagrams.common.arrange.ArrangeException;
+import hu.elte.txtuml.export.diagrams.common.arrange.LayoutTransformer;
+import hu.elte.txtuml.export.diagrams.common.arrange.LayoutVisualizerManager;
 import hu.elte.txtuml.export.javascript.scalers.ClassScaler;
 import hu.elte.txtuml.export.javascript.scalers.NodeScaler;
 import hu.elte.txtuml.export.javascript.utils.LinkUtils;
 import hu.elte.txtuml.export.javascript.utils.NodeUtils;
-import hu.elte.txtuml.export.papyrus.elementsarrangers.ArrangeException;
-import hu.elte.txtuml.export.papyrus.elementsarrangers.txtumllayout.LayoutVisualizerManager;
 import hu.elte.txtuml.export.uml2.mapping.ModelMapProvider;
 import hu.elte.txtuml.layout.export.DiagramExportationReport;
 import hu.elte.txtuml.layout.visualizer.model.AssociationType;
+import hu.elte.txtuml.layout.visualizer.model.DiagramType;
 import hu.elte.txtuml.layout.visualizer.model.LineAssociation;
 import hu.elte.txtuml.layout.visualizer.model.RectangleObject;
-import hu.elte.txtuml.utils.diagrams.LayoutTransformer;
-import hu.elte.txtuml.utils.diagrams.Point;
-import hu.elte.txtuml.utils.diagrams.Rectangle;
 
 /**
  * 
@@ -71,8 +74,9 @@ public class ClassDiagram {
 	 * @throws UnexpectedException
 	 *             Exception is thrown if a diagram contains unexpected parts
 	 */
-	public ClassDiagram(String diagramName, DiagramExportationReport der, ModelMapProvider map)
-			throws UnexpectedEndException, ArrangeException {
+	public ClassDiagram(String diagramName, DiagramExportationReport der, ModelMapProvider map,
+			ClassDiagramPixelDimensionProvider provider, IProgressMonitor monitor) throws UnexpectedEndException, ArrangeException {
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		name = diagramName;
 		classes = new ArrayList<ClassNode>();
 		attributeLinks = new ArrayList<ClassAttributeLink>();
@@ -80,8 +84,12 @@ public class ClassDiagram {
 
 		Set<RectangleObject> nodes = der.getNodes();
 		Set<LineAssociation> links = der.getLinks();
+		
 		// creating ClassNodes
 		for (RectangleObject node : nodes) {
+			if(subMonitor.isCanceled()) return;
+			if(node.isPhantom() || node.isVirtualPhantom()) continue;
+			
 			Classifier clazz = (Classifier) map.getByName(node.getName());
 			ClassNode cn = new ClassNode(clazz, node.getName());
 
@@ -92,14 +100,18 @@ public class ClassDiagram {
 
 			classes.add(cn);
 		}
+		subMonitor.worked(10);
+		if(subMonitor.isCanceled()) return;
 		// arranging the diagram
-		LayoutVisualizerManager lvm = new LayoutVisualizerManager(nodes, links, der.getStatements());
+		LayoutVisualizerManager lvm = new LayoutVisualizerManager(nodes, links, der.getStatements(), DiagramType.Class,
+				provider);
+		lvm.addProgressMonitor(subMonitor.newChild(80));
 		lvm.arrange();
 
+		subMonitor.subTask("Applying transformations...");
+		if(subMonitor.isCanceled()) return;
 		// scaling and transforming nodes and links
-		LayoutTransformer lt = new LayoutTransformer(lvm.getPixelGridRatioHorizontal(),
-				lvm.getPixelGridRatioVertical());
-
+		LayoutTransformer lt = new LayoutTransformer();
 		Map<String, Rectangle> ltrmap = NodeUtils.getRectMapfromROCollection(lvm.getObjects());
 		Map<String, List<Point>> ltpmap = LinkUtils.getPointMapfromLACollection(lvm.getAssociations());
 
@@ -109,9 +121,12 @@ public class ClassDiagram {
 		for (ClassNode cn : classes) {
 			cn.setLayout(ltrmap.get(cn.getId()));
 		}
+		subMonitor.worked(5);
 
+		subMonitor.subTask("Creating associations...");
 		// creating and sorting links into attributeLinks and nonAttributeLinks
 		for (LineAssociation link : der.getLinks()) {
+			if(subMonitor.isCanceled()) return;
 			ClassLink cl;
 			if (link.getType() == AssociationType.generalization) {
 				cl = new ClassLink(link);
@@ -125,7 +140,7 @@ public class ClassDiagram {
 			// setting the final route of the links
 			cl.setRoute(ltpmap.get(link.getId()));
 		}
-
+		subMonitor.done();
 	}
 
 	/**

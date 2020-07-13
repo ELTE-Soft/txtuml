@@ -202,10 +202,6 @@ public class WizardUtils {
 						.filter(mvp -> mvp.getValueKind() == IMemberValuePair.K_CLASS)
 						.flatMap(mvp -> Stream.of(mvp.getValue())).collect(Collectors.toList());
 
-				if (annotValues.isEmpty()) {
-					throw new NoSuchElementException("Group is empty.");
-				}
-
 				for (Object val : annotValues) {
 					List<Object> annotations = new ArrayList<>();
 					if (val instanceof String) {
@@ -216,7 +212,12 @@ public class WizardUtils {
 
 					for (Object v : annotations) {
 						String[][] resolvedTypes = resolveType(annotatedType, (String) v);
-						List<String[]> resolvedTypeList = new ArrayList<>(Arrays.asList(resolvedTypes));
+						
+						if(resolvedTypes == null){
+							throw new NoSuchElementException();
+						}
+						
+						List<String[]> resolvedTypeList = Arrays.asList(resolvedTypes);
 						for (String[] type : resolvedTypeList) {
 							Optional<Pair<String, String>> model = ModelUtils.getModelOf(type[0], referencedProjects);
 							if (model.isPresent()) {
@@ -237,6 +238,7 @@ public class WizardUtils {
 	 *         otherwise the name of the model package and its java project
 	 *         respectively, which contains the types of the given diagramType
 	 */
+	//TODO: throws "String index out of range: -1"
 	public static Optional<Pair<String, String>> getModelByFields(IType diagramType) {
 		try {
 			List<String> referencedProjects = new ArrayList<>(

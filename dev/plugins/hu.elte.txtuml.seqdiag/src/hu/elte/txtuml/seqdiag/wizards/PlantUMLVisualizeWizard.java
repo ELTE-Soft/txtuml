@@ -23,8 +23,8 @@ import hu.elte.txtuml.utils.Pair;
 import hu.elte.txtuml.utils.eclipse.Dialogs;
 import hu.elte.txtuml.utils.eclipse.SaveUtils;
 import hu.elte.txtuml.utils.eclipse.preferences.PreferencesManager;
-import hu.elte.txtuml.utils.eclipse.wizards.TxtUMLVisualizeWizard;
-import hu.elte.txtuml.utils.eclipse.wizards.VisualizeTxtUMLPage;
+import hu.elte.txtuml.export.diagrams.common.wizards.TxtUMLVisualizeWizard;
+import hu.elte.txtuml.export.diagrams.common.wizards.VisualizeTxtUMLPage;
 
 public class PlantUMLVisualizeWizard extends TxtUMLVisualizeWizard {
 
@@ -64,7 +64,6 @@ public class PlantUMLVisualizeWizard extends TxtUMLVisualizeWizard {
 				return false;
 
 			try {
-				checkNoLayoutDescriptionsSelected();
 
 				IProgressService progressService = PlatformUI.getWorkbench().getProgressService();
 				PlantUmlExporter exp = new PlantUmlExporter(txtUMLProjectName, generatedFolderName, diagrams);
